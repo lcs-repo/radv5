@@ -1,33 +1,26 @@
-// Implement API routes to handle CRUD operations for patients.
-
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/app/utils/dbConnect';
-import Patient, { IPatient } from '@/app/models/Patient';
+import Patient from '@/app/models/Patient';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { method } = req;
+export async function GET(req: NextRequest) {
+  try {
+    await dbConnect();
+    const patients = await Patient.find({});
+    return NextResponse.json({ success: true, data: patients }, { status: 200 });
+  } catch (error) {
+    console.error('Failed to fetch patients:', error);
+    return NextResponse.json({ success: false, message: 'Failed to fetch patients' }, { status: 400 });
+  }
+}
 
-  await dbConnect();
-
-  switch (method) {
-    case 'GET':
-      try {
-        const patients: IPatient[] = await Patient.find({});
-        res.status(200).json({ success: true, data: patients });
-      } catch (error) {
-        res.status(400).json({ success: false, message: 'Failed to fetch patients' });
-      }
-      break;
-    case 'POST':
-      try {
-        const patient = await Patient.create(req.body);
-        res.status(201).json({ success: true, data: patient });
-      } catch (error) {
-        res.status(400).json({ success: false, message: 'Failed to create patient' });
-      }
-      break;
-    default:
-      res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).end(`Method ${method} Not Allowed`);
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    await dbConnect();
+    const patient = await Patient.create(body);
+    return NextResponse.json({ success: true, data: patient }, { status: 201 });
+  } catch (error) {
+    console.error('Failed to create patient:', error);
+    return NextResponse.json({ success: false, message: 'Failed to create patient' }, { status: 400 });
   }
 }

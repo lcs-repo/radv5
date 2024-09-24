@@ -41,22 +41,37 @@ export default function AddPatientForm({ onClose, onAdd }: Props) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const data = new FormData();
-    Object.keys(formData).forEach((key) => {
-      // @ts-ignore
-      data.append(key, formData[key]);
+
+    // Append text fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key !== 'xrayImage') {
+        data.append(key, value.toString());
+      }
     });
 
-    const res = await fetch('/api/patients/upload', {
-      method: 'POST',
-      body: data,
-    });
+    // Append file
+    if (formData.xrayImage) {
+      data.append('xrayImage', formData.xrayImage);
+    }
 
-    const result = await res.json();
-    if (result.success) {
-      onAdd(result.data);
-      onClose();
-    } else {
-      alert('Failed to add patient');
+    try {
+      const res = await fetch('/api/patients/upload', {
+        method: 'POST',
+        body: data,
+      });
+
+      if (res.ok) {
+        const response = await res.json();
+        onAdd(response.data);
+        onClose();
+      } else {
+        const errorData = await res.json();
+        console.error('Error adding patient:', errorData.message);
+        // Handle error, e.g., show message to user
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // Handle network or other errors
     }
   };
 
@@ -177,23 +192,23 @@ export default function AddPatientForm({ onClose, onAdd }: Props) {
                 onChange={handleChange}
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="xrayImage" className="block text-sm font-medium text-gray-700">X-Ray Image (JPEG)</label>
-            <input
-              type="file"
-              id="xrayImage"
-              name="xrayImage"
-              accept="image/jpeg"
-              required
-              className="mt-1 block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-indigo-50 file:text-indigo-700
-                hover:file:bg-indigo-100"
-              onChange={handleFileChange}
-            />
+            <div>
+              <label htmlFor="xrayImage" className="block text-sm font-medium text-gray-700">X-Ray Image (JPEG)</label>
+              <input
+                type="file"
+                id="xrayImage"
+                name="xrayImage"
+                accept="image/jpeg"
+                required
+                className="mt-1 block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-indigo-50 file:text-indigo-700
+                  hover:file:bg-indigo-100"
+                onChange={handleFileChange}
+              />
+            </div>
           </div>
           <div className="flex justify-end space-x-3">
             <button
