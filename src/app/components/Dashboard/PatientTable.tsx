@@ -3,9 +3,8 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { PDFDownloadLink, usePDF } from '@react-pdf/renderer';
 import ReportPDF from '../Reports/ReportPDF';
-import { usePDF } from '@react-pdf/renderer';
 
 interface Patient {
   _id: string;
@@ -61,51 +60,69 @@ export default function PatientTable({ patients, refresh }: Props) {
       </thead>
       <tbody>
         {patients.map((patient) => (
-          <tr key={patient._id} className="text-center">
-            <td className="border px-4 py-2">{patient.name}</td>
-            <td className="border px-4 py-2">{patient.address}</td>
-            <td className="border px-4 py-2">{patient.requestedBy}</td>
-            <td className="border px-4 py-2">{patient.examinationDone}</td>
-            <td className="border px-4 py-2">{patient.caseNo}</td>
-            <td className="border px-4 py-2">{new Date(patient.datePerformed).toLocaleDateString()}</td>
-            <td className="border px-4 py-2">{patient.sex}</td>
-            <td className="border px-4 py-2">{new Date(patient.birthday).toLocaleDateString()}</td>
-            <td className="border px-4 py-2">{patient.age}</td>
-            <td className="border px-4 py-2">
-              <Image src={patient.xrayImage} alt="X-Ray" width={50} height={50} />
-            </td>
-            <td className="border px-4 py-2">{patient.report || 'Pending'}</td>
-            <td className="border px-4 py-2">
-              {session?.user?.role === 'Radiologist' && !patient.validated && (
-                <button
-                  onClick={() => validateReport(patient._id)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded"
-                >
-                  Validate
-                </button>
-              )}
-              {session?.user?.role === 'RT' && patient.validated && (
-                <button
-                  onClick={() => {
-                    const [instance, updateInstance] = usePDF({ document: <ReportPDF patient={patient} /> });
-                    if (instance.url) {
-                      const link = document.createElement('a');
-                      link.href = instance.url;
-                      link.setAttribute('download', `Report-${patient.caseNo}.pdf`);
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                    }
-                  }}
-                  className="bg-blue-500 text-white px-2 py-1 rounded"
-                >
-                  Print
-                </button>
-              )}
-            </td>
-          </tr>
+          <PatientRow key={patient._id} patient={patient} session={session} validateReport={validateReport} />
         ))}
       </tbody>
     </table>
+  );
+}
+
+interface PatientRowProps {
+  patient: Patient;
+  session: any;
+  validateReport: (id: string) => void;
+}
+
+function PatientRow({ patient, session, validateReport }: PatientRowProps) {
+  const [instance, updateInstance] = usePDF({ document: <ReportPDF patient={patient} /> });
+
+  const handlePrint = () => {
+    if (instance.url) {
+      const link = document.createElement('a');
+      link.href = instance.url;
+      link.setAttribute('download', `Report-${patient.caseNo}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  };
+
+  return (
+    <tr className="text-center">
+      <td className="border px-4 py-2">{patient.name}</td>
+      <td className="border px-4 py-2">{patient.address}</td>
+      <td className="border px-4 py-2">{patient.requestedBy}</td>
+      <td className="border px-4 py-2">{patient.examinationDone}</td>
+      <td className="border px-4 py-2">{patient.caseNo}</td>
+      <td className="border px-4 py-2">{new Date(patient.datePerformed).toLocaleDateString()}</td>
+      <td className="border px-4 py-2">{patient.sex}</td>
+      <td className="border px-4 py-2">{new Date(patient.birthday).toLocaleDateString()}</td>
+      <td className="border px-4 py-2">{patient.age}</td>
+      <td className="border px-4 py-2">
+        <Image src={patient.xrayImage} alt="X-Ray" width={50} height={50} />
+      </td>
+      <td className="border px-4 py-2">{patient.report || 'Pending'}</td>
+      <td className="border px-4 py-2">
+        {session?.user?.role === 'Radiologist' && !patient.validated && (
+          <button
+            onClick={() => validateReport(patient._id)}
+            className="bg-blue-500 text-white px-2 py-1 rounded"
+          >
+            Validate
+          </button>
+        )}
+        {session?.user?.role === 'RT' && patient.validated && (
+          <>
+            <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
+              {({ loading }) => (loading ? 'Preparing document...' : 'Download PDF')}
+            </PDFDownloadLink>
+            {/* Alternatively, use the handlePrint function if you prefer */}
+            {/* <button onClick={handlePrint} className="bg-blue-500 text-white px-2 py-1 rounded">
+              Print
+            </button> */}
+          </>
+        )}
+      </td>
+    </tr>
   );
 }

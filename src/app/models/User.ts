@@ -1,7 +1,4 @@
-// Implement authentication using NextAuth with credentials provider
-// Define user model
-
-import mongoose, { Document, Model, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
@@ -29,6 +26,8 @@ UserSchema.pre<IUser>('save', async function (next) {
 
 // Method to compare password
 UserSchema.methods.comparePassword = function (candidatePassword: string) {
+  console.log('Stored hashed password:', this.password);
+  console.log('Candidate password:', candidatePassword);
   return bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -14,8 +14,13 @@ export function useAuth(requiredRole?: 'RT' | 'Radiologist') {
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) {
-      router.push('/pages/login');
-    } else if (requiredRole && session.user && 'role' in session.user && session.user.role !== requiredRole) {
+      router.push('/login'); // Corrected Path
+    } else if (
+      requiredRole &&
+      session.user &&
+      'role' in session.user &&
+      session.user.role !== requiredRole
+    ) {
       router.push('/');
     }
   }, [session, status, router, requiredRole]);
