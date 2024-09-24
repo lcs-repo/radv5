@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/app/utils/auth';
 import { useEffect, useState } from 'react';
+import { signOut } from 'next-auth/react';
 import PatientTable from '@/app/components/Dashboard/PatientTable';
 import AddPatientForm from '@/app/components/Dashboard/AddPatientForm';
 
@@ -77,6 +78,12 @@ export default function DashboardPage() {
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out"
             >
               Add Patient
+            </button>
+            <button
+              onClick={signOut}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out"
+            >
+              Logout
             </button>
           </div>
           <div className="bg-white shadow-md rounded-lg overflow-hidden">
