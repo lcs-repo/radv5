@@ -8,20 +8,27 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'RT' | 'Radiologist'>('RT');
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      router.push('/login');
-    } else {
-      alert('Failed to sign up');
+    setError('');
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        router.push('/login');
+      } else {
+        setError(data.message || 'Failed to sign up');
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.');
+      console.error('Sign-up error:', error);
     }
   };
 
@@ -29,6 +36,7 @@ export default function SignUp() {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <form onSubmit={handleSubmit} className="p-6 bg-white rounded shadow-md">
         <h2 className="mb-4 text-lg font-semibold">Sign Up</h2>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         <div className="mb-4">
           <label className="block mb-1">Name:</label>
           <input
