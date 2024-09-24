@@ -45,25 +45,31 @@ export default function DashboardPage() {
   };
 
   if (status === 'loading') {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
   if (!session) {
-    return <div>Access denied. Please log in.</div>;
+    return <div className="flex justify-center items-center h-screen">Access denied. Please log in.</div>;
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Patient Dashboard</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Add Patient
-        </button>
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Patient Dashboard</h1>
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out"
+            >
+              Add Patient
+            </button>
+          </div>
+          <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <PatientTable patients={patients} refresh={fetchPatients} />
+          </div>
+        </div>
       </div>
-      <PatientTable patients={patients} refresh={fetchPatients} />
       {showForm && <AddPatientForm onClose={() => setShowForm(false)} onAdd={handleAddPatient} />}
     </div>
   );

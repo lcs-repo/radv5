@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { PDFDownloadLink, usePDF } from '@react-pdf/renderer';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReportPDF from '../Reports/ReportPDF';
 
 interface Patient {
@@ -41,29 +41,24 @@ export default function PatientTable({ patients, refresh }: Props) {
   };
 
   return (
-    <table className="min-w-full border">
-      <thead>
-        <tr className="bg-gray-200">
-          <th className="border px-4 py-2">Name</th>
-          <th className="border px-4 py-2">Address</th>
-          <th className="border px-4 py-2">Requested By</th>
-          <th className="border px-4 py-2">Examination Done</th>
-          <th className="border px-4 py-2">Case No</th>
-          <th className="border px-4 py-2">Date Performed</th>
-          <th className="border px-4 py-2">Sex</th>
-          <th className="border px-4 py-2">Birthday</th>
-          <th className="border px-4 py-2">Age</th>
-          <th className="border px-4 py-2">X-Ray Image</th>
-          <th className="border px-4 py-2">Report by Radiologist</th>
-          <th className="border px-4 py-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {patients.map((patient) => (
-          <PatientRow key={patient._id} patient={patient} session={session} validateReport={validateReport} />
-        ))}
-      </tbody>
-    </table>
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            {['Name', 'Address', 'Requested By', 'Examination', 'Case No', 'Date', 'Sex', 'Age', 'X-Ray', 'Report', 'Actions'].map((header) => (
+              <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {patients.map((patient) => (
+            <PatientRow key={patient._id} patient={patient} session={session} validateReport={validateReport} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -74,53 +69,37 @@ interface PatientRowProps {
 }
 
 function PatientRow({ patient, session, validateReport }: PatientRowProps) {
-  const [instance, updateInstance] = usePDF({ document: <ReportPDF patient={patient} /> });
-
-  const handlePrint = () => {
-    if (instance.url) {
-      const link = document.createElement('a');
-      link.href = instance.url;
-      link.setAttribute('download', `Report-${patient.caseNo}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-  };
-
   return (
-    <tr className="text-center">
-      <td className="border px-4 py-2">{patient.name}</td>
-      <td className="border px-4 py-2">{patient.address}</td>
-      <td className="border px-4 py-2">{patient.requestedBy}</td>
-      <td className="border px-4 py-2">{patient.examinationDone}</td>
-      <td className="border px-4 py-2">{patient.caseNo}</td>
-      <td className="border px-4 py-2">{new Date(patient.datePerformed).toLocaleDateString()}</td>
-      <td className="border px-4 py-2">{patient.sex}</td>
-      <td className="border px-4 py-2">{new Date(patient.birthday).toLocaleDateString()}</td>
-      <td className="border px-4 py-2">{patient.age}</td>
-      <td className="border px-4 py-2">
-        <Image src={patient.xrayImage} alt="X-Ray" width={50} height={50} />
+    <tr className="hover:bg-gray-50">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.address}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.requestedBy}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.examinationDone}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.caseNo}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(patient.datePerformed).toLocaleDateString()}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.sex}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <Image src={patient.xrayImage} alt="X-Ray" width={50} height={50} className="rounded-md" />
       </td>
-      <td className="border px-4 py-2">{patient.report || 'Pending'}</td>
-      <td className="border px-4 py-2">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.report || 'Pending'}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         {session?.user?.role === 'Radiologist' && !patient.validated && (
           <button
             onClick={() => validateReport(patient._id)}
-            className="bg-blue-500 text-white px-2 py-1 rounded"
+            className="text-blue-600 hover:text-blue-900 mr-2"
           >
             Validate
           </button>
         )}
         {session?.user?.role === 'RT' && patient.validated && (
-          <>
-            <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
-              {({ loading }) => (loading ? 'Preparing document...' : 'Download PDF')}
-            </PDFDownloadLink>
-            {/* Alternatively, use the handlePrint function if you prefer */}
-            {/* <button onClick={handlePrint} className="bg-blue-500 text-white px-2 py-1 rounded">
-              Print
-            </button> */}
-          </>
+          <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
+            {({ loading }) => (
+              <button className="text-green-600 hover:text-green-900">
+                {loading ? 'Preparing...' : 'Download PDF'}
+              </button>
+            )}
+          </PDFDownloadLink>
         )}
       </td>
     </tr>

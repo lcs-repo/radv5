@@ -1,10 +1,12 @@
-import type { NextApiRequest, NextApiResponse, NextApiHandler } from 'next';
+import type { NextApiResponse } from 'next';
+import { NextRequest } from 'next/server';
 import { createRouter, expressWrapper } from 'next-connect';
 import multer from 'multer';
 import dbConnect from '@/app/utils/dbConnect';
 import Patient from '@/app/models/Patient';
 
-interface MulterRequest extends NextApiRequest {
+// Define a custom request type to include Multer's file
+interface MulterRequest extends NextRequest {
   file: Express.Multer.File;
 }
 
@@ -16,10 +18,13 @@ const upload = multer({
   }),
 });
 
+// Initialize the router
 const apiRoute = createRouter<MulterRequest, NextApiResponse>();
 
-apiRoute.use(expressWrapper(upload.single('xrayImage')) as unknown as NextApiHandler);
+// Use Multer middleware
+apiRoute.use(expressWrapper(upload.single('xrayImage')) as any);
 
+// Define the POST handler
 apiRoute.post(async (req: MulterRequest, res: NextApiResponse) => {
   await dbConnect();
 
@@ -45,11 +50,8 @@ apiRoute.post(async (req: MulterRequest, res: NextApiResponse) => {
   }
 });
 
-apiRoute.all((req, res) => {
-  res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
-});
-
 export const config = {
+  runtime: 'edge', // or remove if not using edge functions
   api: {
     bodyParser: false, // Disallow body parsing, consume as stream
   },
