@@ -22,7 +22,7 @@ interface Patient {
 }
 
 export default function DashboardPage() {
-  const { session, status } = useAuth('RT');
+  const { session, status } = useAuth(['RT', 'Radiologist']);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [showForm, setShowForm] = useState(false);
 

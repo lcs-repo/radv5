@@ -7,23 +7,23 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export function useAuth(requiredRole?: 'RT' | 'Radiologist') {
+export function useAuth(allowedRoles?: ('RT' | 'Radiologist')[]) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) {
-      router.push('/login'); // Corrected Path
+      router.push('/login');
     } else if (
-      requiredRole &&
+      allowedRoles &&
       session.user &&
       'role' in session.user &&
-      session.user.role !== requiredRole
+      !allowedRoles.includes(session.user.role as 'RT' | 'Radiologist')
     ) {
       router.push('/');
     }
-  }, [session, status, router, requiredRole]);
+  }, [session, status, router, allowedRoles]);
 
   return { session, status };
 }

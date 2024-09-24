@@ -22,36 +22,58 @@ interface Patient {
   validated: boolean;
 }
 
-interface Props {
+interface PatientTableProps {
   patients: Patient[];
   refresh: () => void;
 }
 
-export default function PatientTable({ patients, refresh }: Props) {
+export default function PatientTable({ patients, refresh }: PatientTableProps) {
   const { data: session } = useSession();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [reportText, setReportText] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const validateReport = async (id: string) => {
-    await fetch(`/api/patients/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ validated: true }),
-    });
-    refresh();
+  const validateReport = async (patientId: string) => {
+    try {
+      const res = await fetch(`/api/patients/${patientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ validated: true }),
+      });
+      if (res.ok) {
+        refresh();
+      } else {
+        console.error('Failed to validate report');
+      }
+    } catch (error) {
+      console.error('Error validating report:', error);
+    }
+  };
+
+  const invalidateReport = async (patientId: string) => {
+    try {
+      const res = await fetch(`/api/patients/${patientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ validated: false }),
+      });
+      if (res.ok) {
+        refresh();
+      } else {
+        console.error('Failed to invalidate report');
+      }
+    } catch (error) {
+      console.error('Error invalidating report:', error);
+    }
   };
 
   const openReportModal = (patient: Patient) => {
     setSelectedPatient(patient);
-    setReportText(patient.report || '');
-    setIsModalOpen(true);
+    setIsReportModalOpen(true);
   };
 
   const closeReportModal = () => {
     setSelectedPatient(null);
-    setReportText('');
-    setIsModalOpen(false);
+    setIsReportModalOpen(false);
   };
 
   const handleReportSubmit = async () => {
@@ -59,7 +81,7 @@ export default function PatientTable({ patients, refresh }: Props) {
       await fetch(`/api/patients/${selectedPatient._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report: reportText }),
+        body: JSON.stringify({ report: selectedPatient.report }),
       });
       closeReportModal();
       refresh();
@@ -85,21 +107,22 @@ export default function PatientTable({ patients, refresh }: Props) {
               patient={patient}
               session={session}
               validateReport={validateReport}
+              invalidateReport={invalidateReport}
               openReportModal={openReportModal}
             />
           ))}
         </tbody>
       </table>
 
-      {isModalOpen && (
+      {isReportModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-black">
               {selectedPatient?.report ? 'Edit Report' : 'Add Report'}
             </h2>
             <textarea
-                value={reportText}
-                onChange={(e) => setReportText(e.target.value)}
+                value={selectedPatient?.report || ''}
+                onChange={(e) => setSelectedPatient({ ...selectedPatient!, report: e.target.value })}
                 className="w-full h-40 p-2 border rounded mb-4 text-black"
                 placeholder="Enter report here..."
                 />
@@ -126,8 +149,9 @@ export default function PatientTable({ patients, refresh }: Props) {
 
 interface PatientRowProps {
   patient: Patient;
-  session: any;
-  validateReport: (id: string) => void;
+  session: Session | null;
+  validateReport: (patientId: string) => void;
+  invalidateReport: (patientId: string) => void;
   openReportModal: (patient: Patient) => void;
 }
 
@@ -135,10 +159,11 @@ function PatientRow({
   patient, 
   session, 
   validateReport, 
+  invalidateReport, 
   openReportModal 
 }: PatientRowProps) {
   return (
-    <tr className="hover:bg-gray-50">
+    <tr className={`${patient.validated ? 'bg-green-100' : ''}`}>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.address}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.requestedBy}</td>
@@ -153,24 +178,39 @@ function PatientRow({
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         <button
           onClick={() => openReportModal(patient)}
-          className="text-blue-600 hover:text-blue-900"
+          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-150 ease-in-out
+            ${patient.validated 
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+              : 'bg-blue-100 text-blue-700'}`}
+          disabled={patient.validated}
         >
           {patient.report ? 'Edit Report' : 'Add Report'}
         </button>
-        {session?.user?.role === 'Radiologist' && !patient.validated && (
-          <button
-            onClick={() => validateReport(patient._id)}
-            className="ml-2 text-green-600 hover:text-green-900"
-          >
-            Validate
-          </button>
+        {session?.user?.role === 'Radiologist' && (
+          <>
+            {!patient.validated ? (
+              <button
+                onClick={() => validateReport(patient._id)}
+                className="ml-2 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 transition-colors duration-150 ease-in-out"
+              >
+                Validate
+              </button>
+            ) : (
+              <button
+                onClick={() => invalidateReport(patient._id)}
+                className="ml-2 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 transition-colors duration-150 ease-in-out"
+              >
+                Invalidate
+              </button>
+            )}
+          </>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         {session?.user?.role === 'RT' && patient.validated && (
           <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
             {({ loading }) => (
-              <button className="text-green-600 hover:text-green-900">
+              <button className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 transition-colors duration-150 ease-in-out">
                 {loading ? 'Preparing...' : 'Download PDF'}
               </button>
             )}
