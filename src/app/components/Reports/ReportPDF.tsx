@@ -1,6 +1,8 @@
 import { Document, Page, Text, View, StyleSheet, Image as PDFImage, Font, BlobProvider } from '@react-pdf/renderer';
 import { useEffect } from 'react';
 import logoImage from '../../../../public/logo/s-logo.png';
+import signature1 from '../../../../public/signatures/signature1.png';
+import signature2 from '../../../../public/signatures/signature2.png';
 
 interface Patient {
   name: string;
@@ -43,13 +45,13 @@ const styles = StyleSheet.create({
   },
   header: { 
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: 20,
   },
   logo: {
-    width: 259,
-    height: 60,
+    width: 346,
+    height: 80,
   },
   title: {
     backgroundColor: '#31569B',
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    marginLeft: 40, // Add this line to create space between logo and title
   },
   infoContainer: {
     flexDirection: 'row',
@@ -64,7 +67,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   infoColumn: {
-    width: '50%',
+    width: '70%',
+  },
+  rightColumn: {
+    width: '30%',
   },
   infoItem: {
     marginBottom: 5,
@@ -94,10 +100,9 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
-    borderTop: 1,
-    borderColor: '#000',
-    paddingTop: 10,
+    marginTop: 'auto',
+    paddingTop: 20,
+    paddingBottom: 30,
   },
   signatureArea: {
     width: '45%',
@@ -105,6 +110,21 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     paddingTop: 5,
     fontSize: 8,
+    textAlign: 'center',
+    marginTop: 10,
+    position: 'relative', // Add this line
+  },
+  signatureImage: {
+    width: 150,
+    height: 150,
+    marginBottom: 5,
+    position: 'absolute', // Add this line
+    top: -70, // Adjust this value as needed to position the signature above the name
+    left: '40%',
+    transform: 'translateX(-50%)',
+  },
+  contentWrapper: {
+    flex: 1,
   },
 });
 
@@ -112,90 +132,94 @@ export default function ReportPDF({ patient }: Props) {
   const MyDocument = (
     <Document>
       <Page style={styles.page}>
-        <View style={styles.header}>
-          <PDFImage src={logoImage.src} style={styles.logo} />
-          <Text style={styles.title}>X-RAY REPORT</Text>
-        </View>
+        <View style={styles.contentWrapper}>
+          <View style={styles.header}>
+            <PDFImage src={logoImage.src} style={styles.logo} />
+            <Text style={styles.title}>X-RAY REPORT</Text>
+          </View>
 
-        <View style={styles.infoContainer}>
-          <View style={styles.infoColumn}>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>NAME: </Text>
-                {patient.name}
-              </Text>
+          <View style={styles.infoContainer}>
+            <View style={styles.infoColumn}>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>NAME: </Text>
+                  {patient.name}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>ADDRESS: </Text>
+                  {patient.address}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>BIRTHDATE: </Text>
+                  {new Date(patient.birthday).toLocaleDateString()}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>REQUESTED BY: </Text>
+                  {patient.requestedBy}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>EXAMINATION: </Text>
+                  {patient.examinationDone}
+                </Text>
+              </View>
             </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>ADDRESS: </Text>
-                {patient.address}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>BIRTHDATE: </Text>
-                {new Date(patient.birthday).toLocaleDateString()}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>REQUESTED BY: </Text>
-                {patient.requestedBy}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>EXAMINATION: </Text>
-                {patient.examinationDone}
-              </Text>
+            <View style={styles.rightColumn}>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>DATE PERFORMED: </Text>
+                  {new Date(patient.datePerformed).toLocaleDateString()}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>CASE NO.: </Text>
+                  {patient.caseNo}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>AGE: </Text>
+                  {patient.age}
+                </Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text>
+                  <Text style={styles.label}>SEX: </Text>
+                  {patient.sex}
+                </Text>
+              </View>
             </View>
           </View>
-          <View style={styles.infoColumn}>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>DATE PERFORMED: </Text>
-                {new Date(patient.datePerformed).toLocaleDateString()}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>CASE NO.: </Text>
-                {patient.caseNo}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>AGE: </Text>
-                {patient.age}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>SEX: </Text>
-                {patient.sex}
-              </Text>
-            </View>
+
+          <Text style={styles.radiologyTitle}>RADIOLOGY</Text>
+
+          <Text style={styles.sectionTitle}>RADIOLOGICAL FINDINGS</Text>
+          <View style={styles.contentArea}>
+            <Text>{patient.report?.findings || 'N/A'}</Text>
           </View>
-        </View>
 
-        <Text style={styles.radiologyTitle}>RADIOLOGY</Text>
-
-        <Text style={styles.sectionTitle}>RADIOLOGICAL FINDINGS</Text>
-        <View style={styles.contentArea}>
-          <Text>{patient.report?.findings || 'N/A'}</Text>
-        </View>
-
-        <Text style={styles.sectionTitle}>IMPRESSION</Text>
-        <View style={styles.contentArea}>
-          <Text>{patient.report?.impression || 'N/A'}</Text>
+          <Text style={styles.sectionTitle}>IMPRESSION</Text>
+          <View style={styles.contentArea}>
+            <Text>{patient.report?.impression || 'N/A'}</Text>
+          </View>
         </View>
 
         <View style={styles.footer}>
           <View style={styles.signatureArea}>
+            <PDFImage src={signature1.src} style={styles.signatureImage} />
             <Text>JOSEPH CORONEL, RRT</Text>
             <Text>RADIOLOGIC TECHNOLOGIST</Text>
           </View>
           <View style={styles.signatureArea}>
+            <PDFImage src={signature2.src} style={styles.signatureImage} />
             <Text>OMAR N. BRAGA, MD, DPBR</Text>
             <Text>RADIOLOGIST</Text>
           </View>
