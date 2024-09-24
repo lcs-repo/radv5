@@ -1,4 +1,5 @@
-import { Document, Page, Text, View, StyleSheet, Image as PDFImage, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image as PDFImage, Font, BlobProvider } from '@react-pdf/renderer';
+import { useEffect } from 'react';
 
 interface Patient {
   name: string;
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
 });
 
 export default function ReportPDF({ patient }: Props) {
-  return (
+  const MyDocument = (
     <Document>
       <Page style={styles.page}>
         <View style={styles.header}>
@@ -159,7 +160,8 @@ export default function ReportPDF({ patient }: Props) {
 
         <View style={styles.reportSection}>
           <Text style={styles.sectionTitle}>Radiologist's Report</Text>
-          <Text>{patient.report}</Text>
+          <Text>Findings: {patient.report?.findings || 'N/A'}</Text>
+          <Text>Impression: {patient.report?.impression || 'N/A'}</Text>
         </View>
 
         <Text style={styles.footer}>
@@ -168,5 +170,21 @@ export default function ReportPDF({ patient }: Props) {
         </Text>
       </Page>
     </Document>
+  );
+
+  return (
+    <BlobProvider document={MyDocument}>
+      {({ url, loading, error }) => {
+        useEffect(() => {
+          if (url) {
+            window.open(url, '_blank');
+          }
+        }, [url]);
+
+        if (loading) return <div>Loading document...</div>;
+        if (error) return <div>Error: {error}</div>;
+        return null;
+      }}
+    </BlobProvider>
   );
 }

@@ -1,23 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/app/utils/dbConnect';
+import { NextResponse } from 'next/server';
 import Patient from '@/app/models/Patient';
+import dbConnect from '@/app/utils/dbConnect';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  await dbConnect();
-
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
+    await dbConnect();
     const { id } = params;
-    const body = await req.json();
+    const patient = await Patient.findById(id);
 
-    const updatedPatient = await Patient.findByIdAndUpdate(id, body, { new: true });
-
-    if (!updatedPatient) {
-      return NextResponse.json({ success: false, message: 'Patient not found' }, { status: 404 });
+    if (!patient) {
+      return NextResponse.json({ error: 'Patient not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: updatedPatient });
-  } catch (error) {
+    return NextResponse.json(patient);
+  } catch (error: any) {
+    console.error('Failed to fetch patient:', error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  try {
+    await dbConnect();
+    const { id } = params;
+    const body = await request.json();
+
+    const updatedPatient = await Patient.findByIdAndUpdate(
+      id,
+      { $set: body },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPatient) {
+      return NextResponse.json({ error: 'Patient not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedPatient);
+  } catch (error: any) {
     console.error('Failed to update patient:', error);
-    return NextResponse.json({ success: false, message: 'Failed to update patient' }, { status: 400 });
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

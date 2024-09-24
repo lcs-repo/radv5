@@ -28,7 +28,10 @@ const PatientSchema: Schema<IPatient> = new Schema({
   birthday: { type: Date, required: true },
   age: { type: Number, required: true },
   xrayImage: { type: String, required: true },
-  report: { type: String, default: '' },
+  report: {
+    findings: String,
+    impression: String
+  },
   validated: { type: Boolean, default: false },
 }, { timestamps: true });
 

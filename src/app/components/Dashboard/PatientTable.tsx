@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReportPDF from '../Reports/ReportPDF';
+import Link from 'next/link';
 
 interface Patient {
   _id: string;
@@ -18,7 +19,10 @@ interface Patient {
   birthday: string;
   age: number;
   xrayImage: string;
-  report?: string;
+  report?: {
+    findings: string;
+    impression: string;
+  };
   validated: boolean;
 }
 
@@ -31,6 +35,8 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
   const { data: session } = useSession();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [findings, setFindings] = useState('');
+  const [impression, setImpression] = useState('');
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -70,6 +76,8 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
 
   const openReportModal = (patient: Patient) => {
     setSelectedPatient(patient);
+    setFindings(patient.report?.findings || '');
+    setImpression(patient.report?.impression || '');
     setIsReportModalOpen(true);
   };
 
@@ -80,19 +88,41 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
 
   const handleReportSubmit = async () => {
     if (selectedPatient) {
-      await fetch(`/api/patients/${selectedPatient._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report: selectedPatient.report }),
-      });
-      closeReportModal();
-      refresh();
+      try {
+        const response = await fetch(`/api/patients/${selectedPatient._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            report: {
+              findings,
+              impression,
+            },
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Failed to update report:', errorData);
+          // TODO: Show an error message to the user
+        } else {
+          closeReportModal();
+          refresh();
+        }
+      } catch (error) {
+        console.error('Error updating report:', error);
+        // TODO: Show an error message to the user
+      }
     }
   };
 
   const openImagePopup = (imageSrc: string) => {
     setSelectedImage(imageSrc);
     setIsImagePopupOpen(true);
+  };
+
+  const handleNormalChestPA = () => {
+    setFindings("Lungs are clear.\nHeart is not enlarged.\nAorta is not dilated.\nDiaphragm and sulci are intact.\nThe rest of the visualized chest structures are unremarkable.");
+    setImpression("No significant chest finding");
   };
 
   return (
@@ -124,16 +154,40 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
 
       {isReportModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
             <h2 className="text-xl font-bold mb-4 text-black">
               {selectedPatient?.report ? 'Edit Report' : 'Add Report'}
             </h2>
-            <textarea
-                value={selectedPatient?.report || ''}
-                onChange={(e) => setSelectedPatient({ ...selectedPatient!, report: e.target.value })}
+            <button
+              onClick={handleNormalChestPA}
+              className="mb-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-150 ease-in-out"
+            >
+              Normal Chest PA
+            </button>
+            <div className="mb-4">
+              <label htmlFor="findings" className="block text-sm font-medium text-gray-700 mb-2">
+                Findings
+              </label>
+              <textarea
+                id="findings"
+                value={findings}
+                onChange={(e) => setFindings(e.target.value)}
                 className="w-full h-40 p-2 border rounded mb-4 text-black"
-                placeholder="Enter report here..."
-                />
+                placeholder="Enter findings here..."
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="impression" className="block text-sm font-medium text-gray-700 mb-2">
+                Impression
+              </label>
+              <textarea
+                id="impression"
+                value={impression}
+                onChange={(e) => setImpression(e.target.value)}
+                className="w-full h-40 p-2 border rounded mb-4 text-black"
+                placeholder="Enter impression here..."
+              />
+            </div>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeReportModal}
@@ -245,19 +299,11 @@ function PatientRow({
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         {session?.user?.role === 'RT' && patient.validated && (
-          <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
-            {({ loading, error }) => {
-              console.log(`PDF Download status for ${patient.caseNo}:`, { loading, error });
-              if (error) {
-                console.error(`PDF Download error for ${patient.caseNo}:`, error);
-              }
-              return (
-                <button className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 transition-colors duration-150 ease-in-out">
-                  {loading ? 'Preparing...' : 'Download PDF'}
-                </button>
-              );
-            }}
-          </PDFDownloadLink>
+          <Link href={`/report/${patient._id}`} target="_blank">
+            <button className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 transition-colors duration-150 ease-in-out">
+              View Report
+            </button>
+          </Link>
         )}
       </td>
     </tr>
