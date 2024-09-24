@@ -246,11 +246,17 @@ function PatientRow({
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         {session?.user?.role === 'RT' && patient.validated && (
           <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
-            {({ loading }) => (
-              <button className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 transition-colors duration-150 ease-in-out">
-                {loading ? 'Preparing...' : 'Download PDF'}
-              </button>
-            )}
+            {({ loading, error }) => {
+              console.log(`PDF Download status for ${patient.caseNo}:`, { loading, error });
+              if (error) {
+                console.error(`PDF Download error for ${patient.caseNo}:`, error);
+              }
+              return (
+                <button className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 transition-colors duration-150 ease-in-out">
+                  {loading ? 'Preparing...' : 'Download PDF'}
+                </button>
+              );
+            }}
           </PDFDownloadLink>
         )}
       </td>
