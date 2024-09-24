@@ -27,16 +27,30 @@ export default function DashboardPage() {
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
+    console.log('Dashboard mounted, status:', status);
     if (status === 'authenticated') {
+      console.log('Fetching patients...');
       fetchPatients();
     }
   }, [status]);
 
   const fetchPatients = async () => {
-    const res = await fetch('/api/patients');
-    const data = await res.json();
-    if (data.success) {
-      setPatients(data.data);
+    try {
+      console.log('Fetching patients...');
+      const res = await fetch('/api/patients');
+      console.log('Fetch response:', res.status, res.statusText);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      console.log('Fetched data:', data);
+      if (data.success) {
+        setPatients(data.data);
+      } else {
+        console.error('Failed to fetch patients:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching patients:', error);
     }
   };
 

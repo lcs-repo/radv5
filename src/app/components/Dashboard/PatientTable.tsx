@@ -30,6 +30,8 @@ interface Props {
 export default function PatientTable({ patients, refresh }: Props) {
   const { data: session } = useSession();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [reportText, setReportText] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const validateReport = async (id: string) => {
     await fetch(`/api/patients/${id}`, {
@@ -38,6 +40,30 @@ export default function PatientTable({ patients, refresh }: Props) {
       body: JSON.stringify({ validated: true }),
     });
     refresh();
+  };
+
+  const openReportModal = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setReportText(patient.report || '');
+    setIsModalOpen(true);
+  };
+
+  const closeReportModal = () => {
+    setSelectedPatient(null);
+    setReportText('');
+    setIsModalOpen(false);
+  };
+
+  const handleReportSubmit = async () => {
+    if (selectedPatient) {
+      await fetch(`/api/patients/${selectedPatient._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report: reportText }),
+      });
+      closeReportModal();
+      refresh();
+    }
   };
 
   return (
@@ -54,10 +80,46 @@ export default function PatientTable({ patients, refresh }: Props) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {patients.map((patient) => (
-            <PatientRow key={patient._id} patient={patient} session={session} validateReport={validateReport} />
+            <PatientRow
+              key={patient._id}
+              patient={patient}
+              session={session}
+              validateReport={validateReport}
+              openReportModal={openReportModal}
+            />
           ))}
         </tbody>
       </table>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-black">
+              {selectedPatient?.report ? 'Edit Report' : 'Add Report'}
+            </h2>
+            <textarea
+                value={reportText}
+                onChange={(e) => setReportText(e.target.value)}
+                className="w-full h-40 p-2 border rounded mb-4 text-black"
+                placeholder="Enter report here..."
+                />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={closeReportModal}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReportSubmit}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -66,9 +128,15 @@ interface PatientRowProps {
   patient: Patient;
   session: any;
   validateReport: (id: string) => void;
+  openReportModal: (patient: Patient) => void;
 }
 
-function PatientRow({ patient, session, validateReport }: PatientRowProps) {
+function PatientRow({ 
+  patient, 
+  session, 
+  validateReport, 
+  openReportModal 
+}: PatientRowProps) {
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
@@ -82,16 +150,23 @@ function PatientRow({ patient, session, validateReport }: PatientRowProps) {
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         <Image src={patient.xrayImage} alt="X-Ray" width={50} height={50} className="rounded-md" />
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.report || 'Pending'}</td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <button
+          onClick={() => openReportModal(patient)}
+          className="text-blue-600 hover:text-blue-900"
+        >
+          {patient.report ? 'Edit Report' : 'Add Report'}
+        </button>
         {session?.user?.role === 'Radiologist' && !patient.validated && (
           <button
             onClick={() => validateReport(patient._id)}
-            className="text-blue-600 hover:text-blue-900 mr-2"
+            className="ml-2 text-green-600 hover:text-green-900"
           >
             Validate
           </button>
         )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         {session?.user?.role === 'RT' && patient.validated && (
           <PDFDownloadLink document={<ReportPDF patient={patient} />} fileName={`Report-${patient.caseNo}.pdf`}>
             {({ loading }) => (

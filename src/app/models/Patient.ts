@@ -13,7 +13,7 @@ export interface IPatient extends Document {
   birthday: Date;
   age: number;
   xrayImage: string; // URL or file path
-  report?: string;
+  report: string;
   validated: boolean;
 }
 
@@ -28,7 +28,7 @@ const PatientSchema: Schema<IPatient> = new Schema({
   birthday: { type: Date, required: true },
   age: { type: Number, required: true },
   xrayImage: { type: String, required: true },
-  report: { type: String },
+  report: { type: String, default: '' },
   validated: { type: Boolean, default: false },
 }, { timestamps: true });
 
