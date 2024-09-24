@@ -31,6 +31,8 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
   const { data: session } = useSession();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isImagePopupOpen, setIsImagePopupOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const validateReport = async (patientId: string) => {
     try {
@@ -88,6 +90,11 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
     }
   };
 
+  const openImagePopup = (imageSrc: string) => {
+    setSelectedImage(imageSrc);
+    setIsImagePopupOpen(true);
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
@@ -109,6 +116,7 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
               validateReport={validateReport}
               invalidateReport={invalidateReport}
               openReportModal={openReportModal}
+              openImagePopup={openImagePopup}
             />
           ))}
         </tbody>
@@ -143,6 +151,26 @@ export default function PatientTable({ patients, refresh }: PatientTableProps) {
           </div>
         </div>
       )}
+
+      {isImagePopupOpen && selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-xl max-w-3xl max-h-[90vh] overflow-auto">
+            <Image
+              src={selectedImage}
+              alt="X-Ray"
+              width={800}
+              height={800}
+              className="object-contain"
+            />
+            <button
+              onClick={() => setIsImagePopupOpen(false)}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -153,6 +181,7 @@ interface PatientRowProps {
   validateReport: (patientId: string) => void;
   invalidateReport: (patientId: string) => void;
   openReportModal: (patient: Patient) => void;
+  openImagePopup: (imageSrc: string) => void;
 }
 
 function PatientRow({ 
@@ -160,7 +189,8 @@ function PatientRow({
   session, 
   validateReport, 
   invalidateReport, 
-  openReportModal 
+  openReportModal,
+  openImagePopup
 }: PatientRowProps) {
   return (
     <tr className={`${patient.validated ? 'bg-green-100' : ''}`}>
@@ -173,7 +203,14 @@ function PatientRow({
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.sex}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        <Image src={patient.xrayImage} alt="X-Ray" width={50} height={50} className="rounded-md" />
+        <Image 
+          src={patient.xrayImage} 
+          alt="X-Ray" 
+          width={50} 
+          height={50} 
+          className="rounded-md cursor-pointer" 
+          onClick={() => openImagePopup(patient.xrayImage)}
+        />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         <button
