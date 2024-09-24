@@ -21,12 +21,29 @@ export default function AddPatientForm({ onClose, onAdd }: Props) {
     xrayImage: null as File | null,
   });
 
+  const calculateAge = (birthday: string) => {
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'number' ? parseInt(value) : value,
-    }));
+    setFormData((prev) => {
+      const updatedFormData = {
+        ...prev,
+        [name]: type === 'number' ? parseInt(value) : value,
+      };
+      if (name === 'birthday') {
+        updatedFormData.age = calculateAge(value);
+      }
+      return updatedFormData;
+    });
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -190,6 +207,7 @@ export default function AddPatientForm({ onClose, onAdd }: Props) {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-black"
                 value={formData.age}
                 onChange={handleChange}
+                readOnly
               />
             </div>
             <div>
