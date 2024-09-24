@@ -7,9 +7,10 @@ import User, { IUser } from '@/app/models/User';
 import { DefaultUser } from "next-auth";
 
 interface User {
-  _id: { toString: () => string };
+  id: string;
   name: string;
   email: string;
+  role: 'RT' | 'Radiologist';
 }
 
 declare module "next-auth" {
@@ -29,20 +30,21 @@ export default NextAuth({
       async authorize(credentials) {
         await dbConnect();
 
-        const user = await User.findOne({ email: credentials?.email }) as IUser | null;
+        const user = await User.findOne({ email: credentials?.email });
         if (!user) {
           throw new Error('No user found with the given email');
         }
 
-        const isValid = await user.comparePassword(credentials!.password);
+        const isValid = await (user as IUser).comparePassword(credentials!.password);
         if (!isValid) {
           throw new Error('Invalid password');
         }
 
         return {
-          id: (user as User)._id.toString(),
-          name: (user as User).name,
-          email: (user as User).email,
+          id: (user as IUser & { _id: string })._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
         };
       },
     }),

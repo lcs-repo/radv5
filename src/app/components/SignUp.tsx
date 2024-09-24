@@ -1,33 +1,44 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
-export default function LoginPage() {
+export default function SignUp() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'RT' | 'Radiologist'>('RT');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role }),
     });
-    if (res?.ok) {
-      router.push('/dashboard');
+    const data = await res.json();
+    if (data.success) {
+      router.push('/login');
     } else {
-      alert('Failed to sign in');
+      alert('Failed to sign up');
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <form onSubmit={handleSubmit} className="p-6 bg-white rounded shadow-md">
-        <h2 className="mb-4 text-lg font-semibold">Sign In</h2>
+        <h2 className="mb-4 text-lg font-semibold">Sign Up</h2>
+        <div className="mb-4">
+          <label className="block mb-1">Name:</label>
+          <input
+            type="text"
+            required
+            className="w-full border px-3 py-2 rounded"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
         <div className="mb-4">
           <label className="block mb-1">Email:</label>
           <input
@@ -48,11 +59,21 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+        <div className="mb-4">
+          <label className="block mb-1">Role:</label>
+          <select
+            className="w-full border px-3 py-2 rounded"
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'RT' | 'Radiologist')}
+          >
+            <option value="RT">RT</option>
+            <option value="Radiologist">Radiologist</option>
+          </select>
+        </div>
         <button type="submit" className="w-full bg-blue-500 text-white px-3 py-2 rounded">
-          Sign In
+          Sign Up
         </button>
       </form>
-      <p className="mt-4">Don't have an account? <Link href="/signup" className="text-blue-500">Sign up</Link></p>
     </div>
   );
 }

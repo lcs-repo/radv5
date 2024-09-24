@@ -13,10 +13,13 @@ export default function Home() {
         </p>
 
         <div className="flex mt-6">
-          <Link href="/pages/login" className="mx-4 px-6 py-3 rounded-md bg-blue-500 text-white">
+          <Link href="/login" className="mx-4 px-6 py-3 rounded-md bg-blue-500 text-white">
             Login
           </Link>
-          <Link href="/pages/dashboard" className="mx-4 px-6 py-3 rounded-md bg-green-500 text-white">
+          <Link href="/signup" className="mx-4 px-6 py-3 rounded-md bg-green-500 text-white">
+            Sign Up
+          </Link>
+          <Link href="/dashboard" className="mx-4 px-6 py-3 rounded-md bg-green-500 text-white">
             View Dashboard
           </Link>
         </div>
