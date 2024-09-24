@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     position: 'relative', // Add this line
   },
   signatureImage: {
-    width: 150,
-    height: 150,
+    width: 130,
+    height: 130,
     marginBottom: 5,
     position: 'absolute', // Add this line
     top: -70, // Adjust this value as needed to position the signature above the name
