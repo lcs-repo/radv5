@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image as PDFImage, Font, BlobProvider } from '@react-pdf/renderer';
 import { useEffect } from 'react';
+import logoImage from '../../../../public/logo/s-logo.png';
 
 interface Patient {
   name: string;
@@ -12,7 +13,10 @@ interface Patient {
   birthday: string;
   age: number;
   xrayImage: string;
-  report?: string;
+  report?: {
+    findings: string;
+    impression: string;
+  };
   validated: boolean;
 }
 
@@ -35,60 +39,72 @@ const styles = StyleSheet.create({
   page: { 
     padding: 30,
     fontFamily: 'Roboto',
-    fontSize: 12,
+    fontSize: 10,
   },
   header: { 
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-    borderBottom: 1,
-    paddingBottom: 10,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 700,
-    color: '#333333',
   },
   logo: {
-    width: 100,
-    height: 50,
+    width: 259,
+    height: 60,
   },
-  section: { 
-    marginBottom: 10,
+  title: {
+    backgroundColor: '#31569B',
+    padding: 10,
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: 700,
-    marginBottom: 5,
-    color: '#555555',
-  },
-  patientInfo: {
+  infoContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  infoColumn: {
+    width: '50%',
   },
   infoItem: {
-    width: '50%',
     marginBottom: 5,
   },
   label: {
-    fontWeight: 500,
-    marginRight: 5,
+    fontWeight: 'bold',
   },
-  image: { 
-    // Remove this style as it's no longer needed
+  radiologyTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
   },
-  reportSection: {
-    marginTop: 20,
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  contentArea: {
+    border: 1,
+    borderColor: '#000',
+    padding: 5,
+    minHeight: 100,
+    marginBottom: 10,
   },
   footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
-    textAlign: 'center',
-    color: '#555555',
-    fontSize: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    borderTop: 1,
+    borderColor: '#000',
+    paddingTop: 10,
+  },
+  signatureArea: {
+    width: '45%',
+    borderTop: 1,
+    borderColor: '#000',
+    paddingTop: 5,
+    fontSize: 8,
   },
 });
 
@@ -97,77 +113,93 @@ export default function ReportPDF({ patient }: Props) {
     <Document>
       <Page style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>X-Ray Report</Text>
-          <PDFImage src="/path-to-your-logo.png" style={styles.logo} />
+          <PDFImage src={logoImage.src} style={styles.logo} />
+          <Text style={styles.title}>X-RAY REPORT</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Patient Information</Text>
-          <View style={styles.patientInfo}>
+        <View style={styles.infoContainer}>
+          <View style={styles.infoColumn}>
             <View style={styles.infoItem}>
               <Text>
-                <Text style={styles.label}>Name:</Text> {patient.name}
+                <Text style={styles.label}>NAME: </Text>
+                {patient.name}
               </Text>
             </View>
             <View style={styles.infoItem}>
               <Text>
-                <Text style={styles.label}>Case No:</Text> {patient.caseNo}
+                <Text style={styles.label}>ADDRESS: </Text>
+                {patient.address}
               </Text>
             </View>
             <View style={styles.infoItem}>
               <Text>
-                <Text style={styles.label}>Sex:</Text> {patient.sex}
+                <Text style={styles.label}>BIRTHDATE: </Text>
+                {new Date(patient.birthday).toLocaleDateString()}
               </Text>
             </View>
             <View style={styles.infoItem}>
               <Text>
-                <Text style={styles.label}>Age:</Text> {patient.age}
+                <Text style={styles.label}>REQUESTED BY: </Text>
+                {patient.requestedBy}
               </Text>
             </View>
             <View style={styles.infoItem}>
               <Text>
-                <Text style={styles.label}>Date of Birth:</Text> {new Date(patient.birthday).toLocaleDateString()}
+                <Text style={styles.label}>EXAMINATION: </Text>
+                {patient.examinationDone}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.infoColumn}>
+            <View style={styles.infoItem}>
+              <Text>
+                <Text style={styles.label}>DATE PERFORMED: </Text>
+                {new Date(patient.datePerformed).toLocaleDateString()}
               </Text>
             </View>
             <View style={styles.infoItem}>
               <Text>
-                <Text style={styles.label}>Address:</Text> {patient.address}
+                <Text style={styles.label}>CASE NO.: </Text>
+                {patient.caseNo}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text>
+                <Text style={styles.label}>AGE: </Text>
+                {patient.age}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text>
+                <Text style={styles.label}>SEX: </Text>
+                {patient.sex}
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Examination Details</Text>
-          <View style={styles.patientInfo}>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>Examination:</Text> {patient.examinationDone}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>Date Performed:</Text> {new Date(patient.datePerformed).toLocaleDateString()}
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text>
-                <Text style={styles.label}>Requested By:</Text> {patient.requestedBy}
-              </Text>
-            </View>
+        <Text style={styles.radiologyTitle}>RADIOLOGY</Text>
+
+        <Text style={styles.sectionTitle}>RADIOLOGICAL FINDINGS</Text>
+        <View style={styles.contentArea}>
+          <Text>{patient.report?.findings || 'N/A'}</Text>
+        </View>
+
+        <Text style={styles.sectionTitle}>IMPRESSION</Text>
+        <View style={styles.contentArea}>
+          <Text>{patient.report?.impression || 'N/A'}</Text>
+        </View>
+
+        <View style={styles.footer}>
+          <View style={styles.signatureArea}>
+            <Text>JOSEPH CORONEL, RRT</Text>
+            <Text>RADIOLOGIC TECHNOLOGIST</Text>
+          </View>
+          <View style={styles.signatureArea}>
+            <Text>OMAR N. BRAGA, MD, DPBR</Text>
+            <Text>RADIOLOGIST</Text>
           </View>
         </View>
-
-        <View style={styles.reportSection}>
-          <Text style={styles.sectionTitle}>Radiologist's Report</Text>
-          <Text>Findings: {patient.report?.findings || 'N/A'}</Text>
-          <Text>Impression: {patient.report?.impression || 'N/A'}</Text>
-        </View>
-
-        <Text style={styles.footer}>
-          This report is {patient.validated ? 'validated' : 'not validated'} and confidential. 
-          For medical professional use only.
-        </Text>
       </Page>
     </Document>
   );
@@ -182,7 +214,7 @@ export default function ReportPDF({ patient }: Props) {
         }, [url]);
 
         if (loading) return <div>Loading document...</div>;
-        if (error) return <div>Error: {error}</div>;
+        if (error) return <div>Error: {error.message}</div>;
         return null;
       }}
     </BlobProvider>
